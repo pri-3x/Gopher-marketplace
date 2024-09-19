@@ -1,0 +1,18 @@
+version: '3'
+
+tasks:
+  build-image:
+    desc: Build image for docker
+    cmds:
+      - docker build -t gopher_market_user:latest ./services/user-service
+      - docker build -t gopher_market_auth:latest ./services/auth-service
+  
+  run:
+    desc: Starting container
+    cmds:
+      - docker compose up -d
+       
+  stop:
+    desc: Stop and remove containers, networks, volumes, and images created by up
+    cmds:
+      - docker compose down --rmi all --volumes --remove-orphans

@@ -9,7 +9,7 @@ RUN go mod download
 
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o auth-service ./cmd/main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o user-service ./cmd/main.go
 
 FROM alpine:latest  
 
@@ -17,8 +17,9 @@ RUN apk --no-cache add ca-certificates
 
 WORKDIR /root/
 
-COPY --from=build /app/auth-service .
+COPY --from=build /app/user-service .
 
-EXPOSE 8080
+EXPOSE 8081
+
 # RUN chmod +x deployment-service
-CMD ["./auth-service"]
+CMD ["./user-service"]

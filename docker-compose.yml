@@ -1,23 +1,58 @@
 version: '3.8'
 
 services:
+  user-service:
+    build:
+      context: ./services/user-service
+      dockerfile: Dockerfile  
+    ports:
+      - "${USER_SERVICE_PORT}:${USER_SERVICE_PORT}"
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_ADDR=${REDIS_ADDR}
+      - SERVER_PORT=${USER_SERVICE_PORT}
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./services/user-service:/app
+    command: ./user-service
+
   auth-service:
-    build: 
+    build:
       context: ./services/auth-service
       dockerfile: Dockerfile
     ports:
-      - "8080:8080"
+      - "${AUTH_SERVICE_PORT}:${AUTH_SERVICE_PORT}"
     environment:
-      - REDIS_ADDR=redis:6379
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_ADDR=${REDIS_ADDR}
+      - SERVER_PORT=${AUTH_SERVICE_PORT}
     depends_on:
+      - postgres
       - redis
+    volumes:
+      - ./services/auth-service:/app
+    command: ./auth-service
+
+  postgres:
+    image: postgres:13
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-gopher_market}
+      POSTGRES_USER: ${POSTGRES_USER:-gopher_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-your_password_here}
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
 
   redis:
     image: redis:6.2-alpine
     ports:
       - "6379:6379"
     volumes:
-      - redis-data:/data
+      - redis_data:/data
 
 volumes:
-  redis-data:
+  postgres_data:
+  redis_data:
