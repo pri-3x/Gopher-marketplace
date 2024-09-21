@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"bytes"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -28,24 +29,58 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Hash the password
+	// Hash password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
-		log.Printf("Failed to hash password: %v", err)
 		http.Error(w, "Failed to hash password", http.StatusInternalServerError)
 		return
 	}
-
-	// Store the hashed password
 	user.Password = string(hashedPassword)
 
-	if err := h.repo.SaveUser(r.Context(), &user); err != nil {
-		log.Printf("Failed to save user: %v", err)
+	// Save to Auth Service database/Redis
+	ctx := r.Context()
+	if err := h.repo.SaveUser(ctx, &user); err != nil {
 		http.Error(w, "Failed to save user", http.StatusInternalServerError)
 		return
 	}
 
-	log.Printf("User registered successfully: %s", user.Username)
+	// Prepare request body for User Service
+	userProfileBody := map[string]string{
+		"username": user.Username,
+		"email":    user.Email,
+	}
+	userProfileJSON, err := json.Marshal(userProfileBody)
+	if err != nil {
+		log.Printf("Failed to marshal user profile: %v", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	// Call User Service to create detailed profile
+	userProfileReq, err := http.NewRequestWithContext(ctx, "POST", "http://user-service:8081/users", bytes.NewReader(userProfileJSON))
+	if err != nil {
+		log.Printf("Failed to create request to User Service: %v", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	userProfileReq.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(userProfileReq)
+	if err != nil {
+		log.Printf("Failed to send request to User Service: %v", err)
+		// Consider whether to rollback the auth creation or just log the error
+		http.Error(w, "Failed to complete registration", http.StatusInternalServerError)
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusCreated {
+		log.Printf("User Service responded with status: %d", resp.StatusCode)
+		http.Error(w, "Failed to complete registration", http.StatusInternalServerError)
+		return
+	}
+
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(map[string]string{"message": "User registered successfully"})
 }

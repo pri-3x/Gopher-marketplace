@@ -23,7 +23,9 @@ func main() {
 	}
 
 	// Auto Migrate the schema
-	db.AutoMigrate(&models.User{})
+	if err := db.AutoMigrate(&models.User{}); err != nil {
+		log.Fatal("MIGRATION FAILED", err)
+	}
 
 	repo := repository.NewUserRepository(db)
 	handler := handlers.NewUserHandler(repo)

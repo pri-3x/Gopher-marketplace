@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"gopher-market/services/auth-service/internal/models"
 	"time"
 
@@ -21,10 +22,15 @@ func NewAuthRepository(redisClient *redis.Client) *AuthRepository {
 func (r *AuthRepository) SaveUser(ctx context.Context, user *models.User) error {
 	userJSON, err := json.Marshal(user)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to marshal user: %w", err)
 	}
 
-	return r.redisClient.Set(ctx, "user:"+user.Username, userJSON, 0).Err()
+	err = r.redisClient.Set(ctx, fmt.Sprintf("user:%s", user.Username), userJSON, 0).Err()
+	if err != nil {
+		return fmt.Errorf("failed to save user to Redis: %w", err)
+	}
+
+	return nil
 }
 
 func (r *AuthRepository) GetUser(ctx context.Context, username string) (*models.User, error) {

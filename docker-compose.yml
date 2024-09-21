@@ -41,8 +41,8 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-gopher_market}
       POSTGRES_USER: ${POSTGRES_USER:-gopher_user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-your_password_here}
-    ports:
-      - "5433:5432"
+    # ports:
+    #   - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
@@ -50,8 +50,6 @@ services:
     image: redis:6.2-alpine
     ports:
       - "6379:6379"
-    volumes:
-      - redis_data:/data
 
 volumes:
   postgres_data:

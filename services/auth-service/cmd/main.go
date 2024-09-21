@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"os"
@@ -13,9 +14,26 @@ import (
 )
 
 func main() {
+	redisAddr := os.Getenv("REDIS_ADDR")
+	log.Printf("REDIS_ADDR environment variable: %s", redisAddr)
+
+	if redisAddr == "" {
+		redisAddr = "redis:6379"
+		log.Printf("REDIS_ADDR was empty, using default: %s", redisAddr)
+	}
+
+	log.Printf("Attempting to connect to Redis at: %s", redisAddr)
+
 	redisClient := redis.NewClient(&redis.Options{
-		Addr: os.Getenv("REDIS_ADDR"),
+		Addr: redisAddr,
 	})
+
+	ctx := context.Background()
+	_, err := redisClient.Ping(ctx).Result()
+	if err != nil {
+		log.Fatalf("Failed to connect to Redis: %v", err)
+	}
+	log.Println("Successfully connected to Redis")
 
 	authRepo := repository.NewAuthRepository(redisClient)
 	authHandler := handlers.NewAuthHandler(authRepo)

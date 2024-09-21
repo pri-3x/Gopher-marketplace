@@ -11,7 +11,7 @@ tasks:
     desc: Starting container
     cmds:
       - docker compose up -d
-       
+
   stop:
     desc: Stop and remove containers, networks, volumes, and images created by up
     cmds:
