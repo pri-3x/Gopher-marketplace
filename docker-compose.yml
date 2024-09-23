@@ -36,13 +36,13 @@ services:
     command: ./auth-service
 
   postgres:
-    image: postgres:13
+    image: postgres:latest
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-gopher_market}
       POSTGRES_USER: ${POSTGRES_USER:-gopher_user}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-your_password_here}
-    # ports:
-    #   - "5432:5432"
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-admin@123}
+    ports:
+      - "5430:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 

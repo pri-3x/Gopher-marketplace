@@ -3,7 +3,6 @@ package main
 import (
 	"log"
 	"net/http"
-	"os"
 
 	"gopher-market/services/user-service/internal/handlers"
 	"gopher-market/services/user-service/internal/models"
@@ -16,7 +15,7 @@ import (
 
 func main() {
 	// Connect to PostgreSQL
-	dsn := os.Getenv("DATABASE_URL")
+	dsn := "host=postgresql user=gopher_user password=admin@123 dbname=gopher_market port=5432 sslmode=disable TimeZone=Asia/Kolkata"
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatal(err)
